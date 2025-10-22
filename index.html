@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Footstep Power Generation Dashboard</title>
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
+
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: radial-gradient(circle at top left, #1f2937, #0f172a);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      margin-top: 30px;
+      font-size: 2rem;
+      text-align: center;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      margin-top: 40px;
+    }
+
+    .card {
+      background: linear-gradient(145deg, #1e293b, #0f172a);
+      border-radius: 18px;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .label {
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+
+    .value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    footer {
+      margin-top: 40px;
+      opacity: 0.7;
+      font-size: 0.9rem;
+    }
+
+    /* 🌟 Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal {
+      background: linear-gradient(135deg, #1e3a8a, #0ea5e9);
+      color: #fff;
+      padding: 30px 40px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      animation: popIn 0.5s ease;
+      max-width: 320px;
+    }
+
+    .modal h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .modal p {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-bottom: 10px;
+    }
+
+    .countdown {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+
+    .close-btn {
+      margin-top: 15px;
+      background: #fff;
+      color: #0f172a;
+      border: none;
+      padding: 10px 20px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .close-btn:hover {
+      background: #e2e8f0;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; }
+      .value { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>⚡ Footstep Power Generation Dashboard</h1>
+
+  <div class="dashboard">
+    <div class="card" id="voltageCard">
+      <div class="icon">🔌</div>
+      <div class="label">Piezo Voltage</div>
+      <div class="value" id="busVoltage">0.00 V</div>
+    </div>
+
+    <div class="card" id="stepsCard">
+      <div class="icon">👣</div>
+      <div class="label">Remaining Steps</div>
+      <div class="value" id="remainingSteps">0</div>
+    </div>
+
+    <div class="card" id="batteryCard">
+      <div class="icon">🔋</div>
+      <div class="label">Battery Percentage</div>
+      <div class="value" id="batteryPercent">0%</div>
+    </div>
+  </div>
+
+  <footer>Copyright © 2025 CapstoneProject.</footer>
+
+  <!-- 🌟 Modal for Voltage Transfer -->
+  <div class="modal-overlay" id="voltageModal">
+    <div class="modal">
+      <h2>⚡ Voltage Transfer Active</h2>
+      <p>The Piezo voltage has reached <strong>5.5V</strong>.<br>Energy is now being transferred to the battery 🔋</p>
+      <div class="countdown" id="countdownText">Closing in 5 seconds...</div>
+      <button class="close-btn" onclick="closeModal(true)">Got it</button>
+    </div>
+  </div>
+
+  <!-- Supabase JS client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // 🧠 Supabase Configuration
+    const SUPABASE_URL = "https://tnqblqzwrvgszvdwupjb.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRucWJscXp3cnZnc3p2ZHd1cGpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4OTM3MTUsImV4cCI6MjA3NjQ2OTcxNX0.5FbQGMxlEL0ncX5R5z_3pkj3p7IKxyu0EeAkuuzwifc";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const busVoltageEl = document.getElementById("busVoltage");
+    const remainingStepsEl = document.getElementById("remainingSteps");
+    const batteryPercentEl = document.getElementById("batteryPercent");
+    const modal = document.getElementById("voltageModal");
+    const countdownText = document.getElementById("countdownText");
+
+    let modalShown = false;
+    let countdownInterval;
+
+    // Fetch latest data
+    async function fetchLatestData() {
+      const { data, error } = await supabase
+        .from("footstep_data_2")
+        .select("*")
+        .order("id", { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error("Error fetching data:", error);
+        return;
+      }
+
+      if (data && data.length > 0) updateDashboard(data[0]);
+    }
+
+    function updateDashboard(newData) {
+      if (!newData) return;
+      const { bus_voltage, remaining_steps, battery_percent } = newData;
+
+      animateValue(busVoltageEl, parseFloat(bus_voltage).toFixed(2) + " V");
+      animateValue(remainingStepsEl, remaining_steps);
+      animateValue(batteryPercentEl, battery_percent + "%");
+
+      if (parseFloat(bus_voltage) >= 5.5 && !modalShown) {
+        showModal();
+        modalShown = true;
+      }
+    }
+
+    function animateValue(element, newValue) {
+      element.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+      element.style.transform = "scale(1.1)";
+      element.style.opacity = "0.6";
+      setTimeout(() => {
+        element.textContent = newValue;
+        element.style.transform = "scale(1)";
+        element.style.opacity = "1";
+      }, 200);
+    }
+
+    // 🌟 Modal Logic
+    function showModal() {
+      modal.style.display = "flex";
+      let secondsLeft = 8;
+
+      countdownText.textContent = `Closing in ${secondsLeft} seconds...`;
+
+      countdownInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+          countdownText.textContent = `Closing in ${secondsLeft} seconds...`;
+        } else {
+          closeModal(false);
+        }
+      }, 1000);
+    }
+
+    function closeModal(manual = false) {
+      modal.style.display = "none";
+      clearInterval(countdownInterval);
+      if (manual) console.log("Modal closed manually");
+    }
+
+    async function subscribeToRealtime() {
+      const channel = supabase
+        .channel("realtime:footstep_data")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "footstep_data" },
+          (payload) => updateDashboard(payload.new)
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") console.log("✅ Realtime subscription active");
+        });
+    }
+
+    fetchLatestData();
+    subscribeToRealtime();
+  </script>
+</body>
+</html>
