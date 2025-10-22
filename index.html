@@ -260,10 +260,10 @@
 
     async function subscribeToRealtime() {
       const channel = supabase
-        .channel("realtime:footstep_data")
+        .channel("realtime:footstep_data_2")
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "footstep_data" },
+          { event: "*", schema: "public", table: "footstep_data_2" },
           (payload) => updateDashboard(payload.new)
         )
         .subscribe((status) => {
