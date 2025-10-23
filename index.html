@@ -171,7 +171,7 @@
   <div class="modal-overlay" id="voltageModal">
     <div class="modal">
       <h2>⚡ Voltage Transfer Active</h2>
-      <p>The Piezo voltage has reached <strong>5.5V</strong>.<br>Energy is now being transferred to the battery 🔋</p>
+      <p>The Piezo voltage has reached <strong>5.0V</strong>.<br>Energy is now being transferred to the battery 🔋</p>
       <div class="countdown" id="countdownText">Closing in 5 seconds...</div>
       <button class="close-btn" onclick="closeModal(true)">Got it</button>
     </div>
@@ -218,7 +218,7 @@
       animateValue(remainingStepsEl, remaining_steps);
       animateValue(batteryPercentEl, battery_percent + "%");
 
-      if (parseFloat(bus_voltage) >= 5.5 && !modalShown) {
+      if (parseFloat(bus_voltage) >= 5.0 && !modalShown) {
         showModal();
         modalShown = true;
       }
